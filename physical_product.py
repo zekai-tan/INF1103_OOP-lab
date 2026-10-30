@@ -20,3 +20,7 @@ class PhysicalProduct(Product):
 
         #display additional physical product information
         print(f"Weight: {self.__weight:.2f} kg")
+
+    def get_fulfilment_info(self):
+        #return the fulfilment information for a physical product
+        return "This product requires physical shipping."
