@@ -29,3 +29,13 @@ class PhysicalProduct(Product, CanBeShipped):
     def calculate_shipping_cost(self):
         #calculate shipping using a chosen rate of 5.00 per kilogram
         return round(self.__weight * 5.00, 2)
+
+    def to_dict(self):
+        #reuse the parent method to get the common product attributes
+        data = super().to_dict()
+
+        #include the product type and its additional attribute
+        data["type"] = "physical"
+        data["weight"] = self.__weight
+
+        return data

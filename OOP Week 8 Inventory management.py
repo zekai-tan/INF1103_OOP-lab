@@ -3,6 +3,9 @@ import json
 #import the classes created
 from product import Product
 from inventory import Inventory
+from physical_product import PhysicalProduct
+from digital_product import DigitalProduct
+from shipping import CanBeShipped
 
 
 def load_inventory():
@@ -24,13 +27,38 @@ def load_inventory():
     inventory = Inventory()
 
     for item in data:
+        #check that each saved product is a dictionary
+        if not isinstance(item, dict):
+            raise ValueError("Each saved product must be a dictionary.")
+
+        #read the saved product type
+        product_type = item.get("type")
+
         #convert each dictionary into a product object
-        product = Product(
-            item["id"],
-            item["name"],
-            item["price"],
-            item["stock"]
-        )
+        if product_type == "physical":
+            product = PhysicalProduct(
+                item["id"],
+                item["name"],
+                item["price"],
+                item["stock"],
+                item["weight"]
+            )
+
+        elif product_type == "digital":
+            product = DigitalProduct(
+                item["id"],
+                item["name"],
+                item["price"],
+                item["stock"],
+                item["download_size"]
+            )
+
+        else:
+            #reject missing or invalid product types
+            raise ValueError(
+                f"Product {item.get('id', '(unknown)')} must have "
+                "a type of 'physical' or 'digital'."
+            )
 
         #manage adding and checking for duplicate IDds
         inventory.add_product(product)
@@ -41,18 +69,15 @@ def load_inventory():
 
 
 def save_inventory(inventory):
-
     #convert the list of Product objects into a list of dictionaries so JSON can store
     data = [
         product.to_dict()
         for product in inventory.get_products()
     ]
-
     try:
         #write the current inventory replacing previous file content
         with open("inventory.json", "w", encoding="utf-8") as file:
             json.dump(data, file, indent=4)
-
     except OSError as error:
         #returning false allows the program to keep running and avoid exiting without saving
         print(f"Inventory cannot be saved: {error}")
@@ -66,6 +91,15 @@ def add_product_from_input(inventory):
 
     print("\nAdd New Product")
 
+    #select which type of product to add
+    print("1. Physical Product")
+    print("2. Digital Product")
+
+    product_type = input("Select product type: ").strip()
+    if product_type not in ("1", "2"):
+        print("Invalid product type. Please select 1 or 2.")
+        return
+
     #remove leading/trailing spaces and convert to uppercase for consistency
     product_id = input("Product ID: ").strip().upper()
 
@@ -73,17 +107,36 @@ def add_product_from_input(inventory):
     if inventory.search_product(product_id) is not None:
         print("A product with this ID already exists.")
         return
-
+    
     name = input("Product Name: ").strip()
-
     try:
         #convert to float and int
         price = float(input("Price: ").strip())
         stock = int(input("Stock Quantity: ").strip())
 
-        product = Product(product_id, name, price, stock)
-        inventory.add_product(product)
+        if product_type == "1":
+            #collect the weight for a physical product
+            weight = float(input("Weight (kg): ").strip())
 
+            product = PhysicalProduct(
+                product_id,
+                name,
+                price,
+                stock,
+                weight
+            )
+
+        else:
+            #collect the download size for a digital product
+            download_size = float(input("Download Size (MB): ").strip())
+            product = DigitalProduct(
+                product_id,
+                name,
+                price,
+                stock,
+                download_size
+            )
+        inventory.add_product(product)
     except ValueError as error:
         #handle invalid numeric input or rejected product attributes
         print(f"Product was not added: {error}")
@@ -98,7 +151,6 @@ def update_stock_from_input(inventory):
 
     product_id = input("Enter Product ID: ").strip()
     product = inventory.search_product(product_id)
-
     if product is None:
         print("Product not found.")
         return
@@ -108,14 +160,11 @@ def update_stock_from_input(inventory):
 
     try:
         quantity = int(input("New Stock Quantity: ").strip())
-
-        #replaces the current stock...not add
+        #replaces the current stck...not add
         product.update_stock(quantity)
-
     except ValueError as error:
         print(f"Stock wasn't updated: {error}")
         return
-
     print("Stock updated")
 
 
@@ -129,13 +178,18 @@ def search_product_from_input(inventory):
     if product is None:
         print("Product not found.")
         return
-
     print("\nProduct Found")
     print("-" * 72)
 
     #product object display its own information
     product.display_information()
 
+    #display how the product is delivered
+    print(f"Fulfilment: {product.get_fulfilment_info()}")
+
+    #only calculate shipping for products that can be shipped
+    if isinstance(product, CanBeShipped):
+        print(f"Shipping Cost: ${product.calculate_shipping_cost():.2f}")
     print("-" * 72)
 
 
@@ -154,7 +208,7 @@ def show_menu():
 
 
 def main():
-
+    
     print("=" * 40)
     print("OOP INVENTORY MANAGEMENT SYSTEM")
     print("=" * 40)
@@ -164,7 +218,7 @@ def main():
         inventory = load_inventory()
 
     except (OSError, ValueError, KeyError, TypeError) as error:
-        #stop if existing file is unreadable/contain invalid data 
+        #stop if existing file is unreadable/contain invalid data
         #so an empty inventory is not created and saved over the existing file
         print(f"Could not load inventory: {error}")
         print("Program ceased to avoid overwriting existing data.")

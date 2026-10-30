@@ -18,9 +18,19 @@ class DigitalProduct(Product):
         #display information from the parent class
         super().display_information()
 
-        #display the additional digital product information
+        #display additional digital product information
         print(f"Download Size: {self.__download_size:.2f} MB")
 
     def get_fulfilment_info(self):
         #return the fulfilment information for a digital product
         return "This product is delivered digitally."
+
+    def to_dict(self):
+        #reuse the parent method to get the common product attributes
+        data = super().to_dict()
+
+        #include the product type and its additional attribute
+        data["type"] = "digital"
+        data["download_size"] = self.__download_size
+
+        return data
