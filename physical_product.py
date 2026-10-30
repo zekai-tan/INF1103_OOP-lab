@@ -1,7 +1,8 @@
 import math
 from product import Product
+from shipping import CanBeShipped
 
-class PhysicalProduct(Product):
+class PhysicalProduct(Product, CanBeShipped):
 
     def __init__(self, product_id, name, price, stock, weight):
         #reuse the parent constructor for the common product attributes
@@ -24,3 +25,7 @@ class PhysicalProduct(Product):
     def get_fulfilment_info(self):
         #return the fulfilment information for a physical product
         return "This product requires physical shipping."
+
+    def calculate_shipping_cost(self):
+        #calculate shipping using a chosen rate of 5.00 per kilogram
+        return round(self.__weight * 5.00, 2)
