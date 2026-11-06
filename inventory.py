@@ -2,10 +2,11 @@ from product import Product
 
 
 class Inventory:
-    def __init__(self):
-        self.__products = []
 
-    def add_product(self, product):
+    def __init__(self) -> None:
+        self.__products: list[Product] = []
+
+    def add_product(self, product: Product) -> None:
         if not isinstance(product, Product):
             raise TypeError("Inventory only accepts Product objects.")
 
@@ -14,7 +15,7 @@ class Inventory:
 
         self.__products.append(product)
 
-    def search_product(self, product_id):
+    def search_product(self, product_id: str) -> Product | None:
         product_id = product_id.strip().upper()
 
         for product in self.__products:
@@ -23,7 +24,23 @@ class Inventory:
 
         return None
 
-    def display_all(self):
+    def find_product(self, product_id: str) -> Product | None:
+        #reuse the existing search method to find a product
+        return self.search_product(product_id)
+
+    def remove_product(self, product_id: str) -> Product | None:
+        #find the product before removing its reference from the inventory
+        product = self.find_product(product_id)
+
+        if product is None:
+            return None
+
+        #remove the reference without destroying the product object
+        self.__products.remove(product)
+
+        return product
+
+    def display_all(self) -> None:
         if not self.__products:
             print("\nInventory is empty.")
             return
@@ -36,5 +53,5 @@ class Inventory:
 
         print("-" * 72)
 
-    def get_products(self):
+    def get_products(self) -> list[Product]:
         return self.__products.copy()
