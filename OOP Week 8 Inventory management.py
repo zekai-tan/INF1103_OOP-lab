@@ -6,6 +6,7 @@ from inventory import Inventory
 from physical_product import PhysicalProduct
 from digital_product import DigitalProduct
 from shipping import CanBeShipped
+from supplier import Supplier
 
 
 def load_inventory():
@@ -26,10 +27,41 @@ def load_inventory():
 
     inventory = Inventory()
 
+    #reuse supplier objects when products have the same supplier ID
+    suppliers: dict[str, Supplier] = {}
+
     for item in data:
         #check that each saved product is a dictionary
         if not isinstance(item, dict):
             raise ValueError("Each saved product must be a dictionary.")
+
+        #read and standardise the saved supplier details
+        supplier_id = item["supplier_id"].strip().upper()
+        supplier_name = item["supplier_name"].strip()
+        supplier_email = item["supplier_email"].strip()
+
+        if supplier_id not in suppliers:
+            #create the supplier independently before creating the product
+            supplier = Supplier(
+                supplier_id,
+                supplier_name,
+                supplier_email
+            )
+
+            suppliers[supplier_id] = supplier
+
+        else:
+            supplier = suppliers[supplier_id]
+
+            #the same supplier ID must have consistent details
+            if supplier.to_dict() != {
+                "supplier_id": supplier_id,
+                "supplier_name": supplier_name,
+                "supplier_email": supplier_email
+            }:
+                raise ValueError(
+                    f"Conflicting details for supplier {supplier_id}."
+                )
 
         #read the saved product type
         product_type = item.get("type")
@@ -41,7 +73,8 @@ def load_inventory():
                 item["name"],
                 item["price"],
                 item["stock"],
-                item["weight"]
+                item["weight"],
+                supplier
             )
 
         elif product_type == "digital":
@@ -50,7 +83,8 @@ def load_inventory():
                 item["name"],
                 item["price"],
                 item["stock"],
-                item["download_size"]
+                item["download_size"],
+                supplier
             )
 
         else:
@@ -114,6 +148,34 @@ def add_product_from_input(inventory):
         price = float(input("Price: ").strip())
         stock = int(input("Stock Quantity: ").strip())
 
+        #ask which supplier provides this product
+        supplier_id = input("Supplier ID: ").strip().upper()
+
+        supplier: Supplier | None = None
+
+        #look for an existing supplier through the current products
+        for existing_product in inventory.get_products():
+            existing_supplier = existing_product.get_supplier()
+
+            if existing_supplier.to_dict()["supplier_id"] == supplier_id:
+                supplier = existing_supplier
+                break
+
+        if supplier is None:
+            #create a new supplier independently before creating the product
+            supplier_name = input("Supplier Name: ").strip()
+            supplier_email = input("Supplier Email: ").strip()
+
+            supplier = Supplier(
+                supplier_id,
+                supplier_name,
+                supplier_email
+            )
+
+        else:
+            print("Using existing supplier:")
+            supplier.display_information()
+
         if product_type == "1":
             #collect the weight for a physical product
             weight = float(input("Weight (kg): ").strip())
@@ -123,7 +185,8 @@ def add_product_from_input(inventory):
                 name,
                 price,
                 stock,
-                weight
+                weight,
+                supplier
             )
 
         else:
@@ -134,7 +197,8 @@ def add_product_from_input(inventory):
                 name,
                 price,
                 stock,
-                download_size
+                download_size,
+                supplier
             )
         inventory.add_product(product)
     except ValueError as error:
