@@ -9,7 +9,7 @@ from shipping import CanBeShipped
 from supplier import Supplier
 
 
-def load_inventory():
+def load_inventory() -> Inventory:
     #load the inventory from a JSON file and return an Inventory object
 
     try:
@@ -102,7 +102,7 @@ def load_inventory():
     return inventory
 
 
-def save_inventory(inventory):
+def save_inventory(inventory: Inventory) -> bool:
     #convert the list of Product objects into a list of dictionaries so JSON can store
     data = [
         product.to_dict()
@@ -121,7 +121,7 @@ def save_inventory(inventory):
     return True
 
 
-def add_product_from_input(inventory):
+def add_product_from_input(inventory: Inventory) -> None:
 
     print("\nAdd New Product")
 
@@ -209,7 +209,7 @@ def add_product_from_input(inventory):
     print("Product added")
 
 
-def update_stock_from_input(inventory):
+def update_stock_from_input(inventory: Inventory) -> None:
 
     print("\nUpdate Stock")
 
@@ -232,7 +232,7 @@ def update_stock_from_input(inventory):
     print("Stock updated")
 
 
-def search_product_from_input(inventory):
+def search_product_from_input(inventory: Inventory) -> None:
 
     print("\nSearch Product")
 
@@ -257,7 +257,7 @@ def search_product_from_input(inventory):
     print("-" * 72)
 
 
-def show_menu():
+def show_menu() -> None:
 
     print("""
 ----------- MENU -----------
@@ -271,7 +271,7 @@ def show_menu():
 """)
 
 
-def main():
+def main() -> None:
     
     print("=" * 40)
     print("OOP INVENTORY MANAGEMENT SYSTEM")
